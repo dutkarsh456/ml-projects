@@ -17,7 +17,8 @@ Two beginner ML projects built with Python and scikit-learn.
 - File: `spam_classifier.py`
 
 ### Output Preview
-[PASTE SCREENSHOT HERE]
+<img width="952" height="505" alt="image" src="https://github.com/user-attachments/assets/2c60168f-4654-4bbd-9c3a-c0253e42f6ab" />
+
 
 ---
 Built by Utkarsh Dubey | Galgotias College Of Engineering and Technolog
