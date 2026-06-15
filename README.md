@@ -21,4 +21,4 @@ Two beginner ML projects built with Python and scikit-learn.
 
 
 ---
-Built by Utkarsh Dubey | Galgotias College Of Engineering and Technolog
+Built by Utkarsh Dubey | Galgotias College Of Engineering and Technology
