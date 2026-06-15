@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Customer Service Chatbot</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+  #app { width: 100%; max-width: 480px; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.12); display: flex; flex-direction: column; height: 620px; }
+  #header { background: #1D9E75; padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  #avatar { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+  #header-text h1 { font-size: 16px; font-weight: 600; color: #fff; }
+  #header-text p { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+  #online-dot { width: 9px; height: 9px; border-radius: 50%; background: #9FE1CB; margin-left: auto; flex-shrink: 0; }
+  #quick-wrap { padding: 10px 14px 0; display: flex; flex-wrap: wrap; gap: 6px; background: #fff; border-bottom: 1px solid #f0f0f0; padding-bottom: 10px; }
+  .qbtn { padding: 5px 12px; border-radius: 999px; font-size: 12px; border: 1px solid #d0d0d0; background: #f8f8f8; color: #444; cursor: pointer; font-family: inherit; transition: background 0.15s; }
+  .qbtn:hover { background: #e8f5f0; border-color: #1D9E75; color: #0F6E56; }
+  #chat-body { flex: 1; overflow-y: auto; padding: 16px 14px; display: flex; flex-direction: column; gap: 12px; background: #f7f9fb; }
+  .msg { display: flex; gap: 8px; max-width: 88%; animation: pop 0.2s ease; }
+  @keyframes pop { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .msg.user { align-self: flex-end; flex-direction: row-reverse; }
+  .bubble { padding: 10px 14px; font-size: 13.5px; line-height: 1.55; border-radius: 16px; }
+  .msg.bot .bubble { background: #fff; color: #222; border-radius: 4px 16px 16px 16px; border: 1px solid #e8e8e8; font-family: 'Courier New', monospace; font-size: 13px; }
+  .msg.user .bubble { background: #1D9E75; color: #fff; border-radius: 16px 4px 16px 16px; }
+  .bot-av { width: 28px; height: 28px; border-radius: 50%; background: #1D9E75; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; align-self: flex-end; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; margin-bottom: 5px; }
+  .b-green  { background: #E1F5EE; color: #0F6E56; }
+  .b-amber  { background: #FAEEDA; color: #854F0B; }
+  .b-blue   { background: #E6F1FB; color: #185FA5; }
+  .b-purple { background: #EEEDFE; color: #534AB7; }
+  .b-red    { background: #FCEBEB; color: #A32D2D; }
+  .typing { display: flex; gap: 5px; padding: 10px 14px; background: #fff; border-radius: 4px 16px 16px 16px; border: 1px solid #e8e8e8; width: fit-content; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: #aaa; animation: bounce 1.2s infinite; }
+  .dot:nth-child(2) { animation-delay: 0.2s; }
+  .dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-5px); opacity: 1; } }
+  #footer { padding: 12px 14px; border-top: 1px solid #ebebeb; display: flex; gap: 8px; background: #fff; }
+  #inp { flex: 1; padding: 9px 16px; font-size: 13.5px; border: 1px solid #ddd; border-radius: 999px; outline: none; font-family: inherit; background: #f8f8f8; color: #222; }
+  #inp:focus { border-color: #1D9E75; background: #fff; }
+  #sendbtn { width: 38px; height: 38px; border-radius: 50%; background: #1D9E75; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; transition: background 0.15s; }
+  #sendbtn:hover { background: #0F6E56; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div id="avatar">🤖</div>
+    <div id="header-text">
+      <h1>Support Assistant</h1>
+      <p>Rule-based NLP Chatbot</p>
+    </div>
+    <div id="online-dot"></div>
+  </div>
+  <div id="quick-wrap">
+    <button class="qbtn" onclick="sendQ('Track my order')">📦 Track order</button>
+    <button class="qbtn" onclick="sendQ('I have a billing issue')">💳 Billing</button>
+    <button class="qbtn" onclick="sendQ('My app is not working')">🛠 Tech support</button>
+    <button class="qbtn" onclick="sendQ('Request a refund')">↩ Refund</button>
+    <button class="qbtn" onclick="sendQ('Talk to a human agent')">👤 Human agent</button>
+  </div>
+  <div id="chat-body"></div>
+  <div id="footer">
+    <input id="inp" type="text" placeholder="Type your message…" autocomplete="off" />
+    <button id="sendbtn" aria-label="Send">➤</button>
+  </div>
+</div>
+
+<script>
+const intents = [
+  {
+    name: 'greeting', label: 'Greeting', badge: 'b-green',
+    patterns: [/\b(hi|hello|hey|good morning|good evening|howdy|sup|greetings|hii|helo)\b/i],
+    responses: [
+      "Hello! 👋 I'm your Support Assistant. I can help with orders, billing, tech issues, and refunds. What can I do for you?",
+      "Hi there! Welcome to support. How can I make your day better? 😊"
+    ]
+  },
+  {
+    name: 'order', label: 'Order tracking', badge: 'b-amber',
+    patterns: [/\b(track|order|delivery|shipped|shipping|where is my|parcel|package|dispatch|status)\b/i],
+    responses: [
+      "I can help track your order! 📦 Please share your Order ID (e.g. #ORD-1234) and I'll pull up the latest status.",
+      "Sure! To check your delivery status, share the order number from your confirmation email."
+    ]
+  },
+  {
+    name: 'billing', label: 'Billing', badge: 'b-blue',
+    patterns: [/\b(bill|billing|invoice|charge|payment|pay|subscription|renew|statement|amount|fee|due)\b/i],
+    responses: [
+      "I see you have a billing question. 💳 I can help with invoices, payment methods, and subscriptions. Could you describe the issue?",
+      "For billing concerns, I'll need to verify your account. Could you share the email linked to your account?"
+    ]
+  },
+  {
+    name: 'refund', label: 'Refund', badge: 'b-blue',
+    patterns: [/\b(refund|return|money back|cancel|reimburse|chargeback|reverse)\b/i],
+    responses: [
+      "Refunds are processed within 3–5 business days. 🔄 Please share your Order ID and reason for the return.",
+      "I can process your refund request! What's the order number, and what went wrong with the item?"
+    ]
+  },
+  {
+    name: 'tech', label: 'Tech support', badge: 'b-purple',
+    patterns: [/\b(not working|broken|error|crash|bug|glitch|login|password|reset|slow|loading|can't|cannot|issue|problem|fix)\b/i],
+    responses: [
+      "Let's fix that! 🛠 Can you describe what's happening? Any error messages would help me diagnose faster.",
+      "Technical issues are frustrating — I get it. Walk me through the problem and we'll sort it out step by step."
+    ]
+  },
+  {
+    name: 'escalate', label: 'Escalation', badge: 'b-red',
+    patterns: [/\b(human|agent|representative|speak to|talk to|real person|manager|supervisor|escalate)\b/i],
+    responses: [
+      "Connecting you to a live agent now. ⏳ Average wait: ~4 minutes. Is there anything to pass along to them?",
+      "Transferring you to a human agent right away. They'll have context of our conversation. Please hold! 📞"
+    ]
+  },
+  {
+    name: 'hours', label: 'General query', badge: 'b-green',
+    patterns: [/\b(hours|open|close|working hours|business hours|available|when|support time|timing)\b/i],
+    responses: [
+      "Our support team is available Mon–Fri, 9 AM to 6 PM IST. 🕘 Outside those hours, I'm here 24/7!"
+    ]
+  },
+  {
+    name: 'thanks', label: 'General query', badge: 'b-green',
+    patterns: [/\b(thanks|thank you|thx|ty|great|awesome|perfect|helpful|appreciate|nice|good)\b/i],
+    responses: [
+      "Happy to help! 😊 Is there anything else I can assist you with?",
+      "You're welcome! Feel free to reach out anytime. Have a great day! 🌟"
+    ]
+  },
+];
+
+const fallbacks = [
+  "I'm not sure I understood that. Could you try asking about: Order tracking, Billing, Tech support, or Refunds?",
+  "Hmm, that's outside my current knowledge base. I can help with orders, billing, tech issues, and refunds.",
+  "I didn't quite catch that. Please try rephrasing — or use the quick buttons above! 👆"
+];
+let fbIdx = 0;
+
+function detectIntent(text) {
+  for (const intent of intents) {
+    for (const p of intent.patterns) {
+      if (p.test(text)) return intent;
+    }
+  }
+  return null;
+}
+
+function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+const body = document.getElementById('chat-body');
+
+function addMsg(role, text, intent) {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg ' + role;
+  if (role === 'bot') {
+    const av = document.createElement('div');
+    av.className = 'bot-av'; av.textContent = '🤖';
+    const col = document.createElement('div');
+    if (intent) {
+      const b = document.createElement('div');
+      b.className = 'badge ' + intent.badge;
+      b.textContent = intent.label + ' detected';
+      col.appendChild(b);
+    }
+    const bub = document.createElement('div');
+    bub.className = 'bubble'; bub.textContent = text;
+    col.appendChild(bub);
+    wrap.appendChild(av); wrap.appendChild(col);
+  } else {
+    const bub = document.createElement('div');
+    bub.className = 'bubble'; bub.textContent = text;
+    wrap.appendChild(bub);
+  }
+  body.appendChild(wrap);
+  body.scrollTop = body.scrollHeight;
+}
+
+function showTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg bot'; wrap.id = 'typing-wrap';
+  const av = document.createElement('div');
+  av.className = 'bot-av'; av.textContent = '🤖';
+  const t = document.createElement('div');
+  t.className = 'typing';
+  t.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+  wrap.appendChild(av); wrap.appendChild(t);
+  body.appendChild(wrap);
+  body.scrollTop = body.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-wrap');
+  if (el) el.remove();
+}
+
+function handle(text) {
+  text = text.trim();
+  if (!text) return;
+  addMsg('user', text);
+  showTyping();
+  setTimeout(() => {
+    removeTyping();
+    const intent = detectIntent(text);
+    if (intent) {
+      addMsg('bot', rand(intent.responses), intent);
+    } else {
+      addMsg('bot', fallbacks[fbIdx % fallbacks.length], null);
+      fbIdx++;
+    }
+  }, 600 + Math.random() * 500);
+}
+
+function sendQ(msg) { handle(msg); }
+
+const inp = document.getElementById('inp');
+document.getElementById('sendbtn').addEventListener('click', () => { handle(inp.value); inp.value = ''; });
+inp.addEventListener('keydown', e => { if (e.key === 'Enter') { handle(inp.value); inp.value = ''; } });
+
+setTimeout(() => {
+  addMsg('bot', "Hi! 👋 I'm your Support Assistant. I can help with orders, billing, tech support, refunds, and more. How can I help you today?",
+    { label: 'Greeting', badge: 'b-green' });
+}, 500);
+</script>
+</body>
+</html>
